@@ -2,7 +2,7 @@ package di
 
 import cats._
 
-trait WiringModule {
+trait Module {
   def wired[A]: A
 }
 
