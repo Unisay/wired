@@ -8,19 +8,6 @@ import di.Wiring._
 
 import scala.concurrent.ExecutionContext
 
-
-/**
-  * Example of a dependency-injection approach in scala
-  *
-  * Requirements:
-  * ☑ Functional: immutable and lazy
-  * ☑ In any place of a program be able to wire a sub-component
-  * ☑ Compile-type verification with readable error messages
-  * ☑ Handle alternative wirings (for testing)
-  * ☐ Handle cyclic-dependencies
-  */
-
-
 case class Application(a: ComponentA) {
   def run: Eval[String] = Eval.later(a.toString)
 }
