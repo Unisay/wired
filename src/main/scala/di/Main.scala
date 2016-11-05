@@ -3,7 +3,7 @@ package di
 import java.util.concurrent.Executor
 
 import cats.Eval
-import cats.syntax.cartesian._
+import cats.implicits._
 import di.Wiring._
 
 import scala.concurrent.ExecutionContext
@@ -13,8 +13,9 @@ import scala.concurrent.ExecutionContext
   * Example of a dependency-injection approach in scala
   *
   * Requirements:
+  * ☑ Functional: immutable and lazy
   * ☑ In any place of a program be able to wire a sub-component
-  * ☑ Readable compile-time error messages
+  * ☑ Compile-type verification with readable error messages
   * ☑ Handle alternative wirings (for testing)
   * ☐ Handle cyclic-dependencies
   */
@@ -49,11 +50,20 @@ case class ConfigComponentC(name: String)
 case class ConfigApplication(a: ConfigComponentA)
 
 trait DefaultModule {
-  def wiredEnv = Env(scala.concurrent.ExecutionContext.global).singleton
-  def wiredComponentC(config: ConfigComponentC): Wiring[ComponentC] = config.name.wire |@| wiredEnv map SomeC
-  def wiredComponentB(config: ConfigComponentB) = config.name.wire |@| wiredComponentC(config.c) |@| wiredEnv map SomeB
-  def wiredComponentA(config: ConfigComponentA) = config.name.wire |@| wiredComponentB(config.b) |@| wiredEnv map SomeA
-  def wiredApplication(config: ConfigApplication) = Application of wiredComponentA(config.a)
+  def wiredEnv: Wired[Env] = Env(scala.concurrent.ExecutionContext.global).singleton
+
+  def wiredComponentC: ComponentC Requires ConfigComponentC =
+    ask[ConfigComponentC].map(_.name) |@| wiredEnv.ignoring map SomeC
+
+  def wiredComponentB: ComponentB Requires ConfigComponentB =
+    ask[ConfigComponentB].map(_.name) |@| wiredComponentC.contramap(_.c) |@| wiredEnv.ignoring map SomeB
+
+  def wiredComponentA: ComponentA Requires ConfigComponentA =
+    ask[ConfigComponentA].map(_.name) |@| wiredComponentB.contramap(_.b) |@| wiredEnv.ignoring map SomeA
+
+  def wiredApplication: Application Requires ConfigApplication =
+    wiredComponentA.contramap((_: ConfigApplication).a) map Application
+
 }
 
 object DefaultModule extends DefaultModule
@@ -61,7 +71,7 @@ object DefaultModule extends DefaultModule
 trait TestModule extends DefaultModule {
   override val wiredEnv = {
     val syncExecutor = new Executor { def execute(r: Runnable): Unit = r.run() }
-    Env of ExecutionContext.fromExecutor(syncExecutor).singleton
+    ExecutionContext.fromExecutor(syncExecutor).singleton map Env
   }
 }
 
@@ -91,7 +101,9 @@ object Main {
       val name: String = "Mock Component C"
       override def toString: String = name
     }
-    val testModule = new TestModule { override def wiredComponentC(c: ConfigComponentC) = MockC.wire[ComponentC] }
+    val testModule = new TestModule {
+      override def wiredComponentC = MockC.prototype[ComponentC].ignoring[ConfigComponentC]
+    }
     val application: Application = testModule.wiredApplication(readConfig).value
     println(application.run.value)
   }

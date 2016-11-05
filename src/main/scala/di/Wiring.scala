@@ -1,6 +1,7 @@
 package di
 
 import cats._
+import cats.data.Kleisli
 
 trait Module {
   def wired[A]: A
@@ -8,18 +9,23 @@ trait Module {
 
 object Wiring {
 
-  type Wiring[+A] = Eval[A]
+  type Wiring[I, O] = Kleisli[Eval, I, O]
+  type Wired[O] = Wiring[Unit, O]
+  type Requires[O, I] = Wiring[I, O]
 
-  def wire[A](a: A): Wiring[A] = Eval.now(a)
-  def singleton[A](a: A): Wiring[A] = Eval.later(a)
+  def ask[I]: Wiring[I, I] = Kleisli.ask[Eval, I]
 
-  implicit class OfSyntax[A, B](val f: A => B) extends AnyVal {
-    def of(wiring: Wiring[A]): Wiring[B] = wiring.map(f)
+  def prototype[I, O](value: O): Wired[O] = Kleisli.lift[Eval, Unit, O](Eval.now(value))
+
+  def singleton[I, O](value: => O): Wired[O] = Kleisli.lift[Eval, Unit, O](Eval.later(value))
+
+  implicit class WiringSyntax[O](val wiring: Wiring[Unit, O]) extends AnyVal {
+    def ignoring[A]: Wiring[A, O] = wiring.local(_ => ())
   }
 
-  implicit class WireSyntax[A](val a: A) extends AnyVal {
-    def wire[AA >: A]: Wiring[AA] = Wiring.wire(a)
-    def singleton[AA >: A]: Wiring[AA] = Wiring.singleton(a)
+  implicit class WireSyntax[O](val value: O) extends AnyVal {
+    def prototype[OO >: O]: Wired[OO] = Wiring.prototype(value)
+    def singleton[I, OO >: O]: Wired[OO] = Wiring.singleton(value)
   }
 
 }
