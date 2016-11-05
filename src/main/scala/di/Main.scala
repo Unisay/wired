@@ -4,13 +4,25 @@ import java.util.concurrent.Executor
 
 import cats.Eval
 import cats.implicits._
-import di.Wiring._
+import di.wiring._
 
 import scala.concurrent.ExecutionContext
 
-case class Application(a: ComponentA) {
-  def run: Eval[String] = Eval.later(a.toString)
-}
+/*
+
+Component tree:                Config tree:
+
+Application                    ConfigApplication
+┃                              ┃
+┣━━ ComponentA                 ┣━━ ConfigComponentA
+┃     ┃                        ┃         ┃
+┃     ┗━ ComponentB            ┃         ┗━ ConfigComponentB
+┃          ┃                   ┃                  ┃
+┃          ┗━ ComponentC       ┃                  ┗━ ConfigComponentC
+┃                              ┃
+┗━━ ComponentD                 ┗━━ String
+
+*/
 
 trait ComponentA {
   val name: String
@@ -26,40 +38,49 @@ trait ComponentC {
   val name: String
 }
 
+trait ComponentD {
+  val name: String
+}
+
+case class Application(a: ComponentA, d: ComponentD) { def run: Eval[String] = Eval.later(toString) }
 case class Env(ec: ExecutionContext)
 case class SomeA(name: String, b: ComponentB, env: Env) extends ComponentA
 case class SomeB(name: String, c: ComponentC, env: Env) extends ComponentB
 case class SomeC(name: String, env: Env) extends ComponentC
+case class SomeD(name: String) extends ComponentD
 
 case class ConfigComponentA(name: String, b: ConfigComponentB)
 case class ConfigComponentB(name: String, c: ConfigComponentC)
 case class ConfigComponentC(name: String)
-case class ConfigApplication(a: ConfigComponentA)
+case class ConfigApplication(a: ConfigComponentA, nameD: String)
 
 trait DefaultModule {
-  def wiredEnv: Wired[Env] = Env(scala.concurrent.ExecutionContext.global).singleton
+
+  def wiredEnv: Wired[Env] =
+    Env(scala.concurrent.ExecutionContext.global).wire.singleton
+
+  def wiredComponentD: ComponentD Requires String =
+    SomeD.wire(ask[String]).widen
 
   def wiredComponentC: ComponentC Requires ConfigComponentC =
-    ask[ConfigComponentC].map(_.name) |@| wiredEnv.ignoring map SomeC
+    SomeC.wire[ConfigComponentC](ask.map(_.name), wiredEnv.ignoring).widen
 
   def wiredComponentB: ComponentB Requires ConfigComponentB =
-    ask[ConfigComponentB].map(_.name) |@| wiredComponentC.contramap(_.c) |@| wiredEnv.ignoring map SomeB
+    SomeB.wire[ConfigComponentB](ask.map(_.name), wiredComponentC.contramap(_.c), wiredEnv.ignoring).widen
 
   def wiredComponentA: ComponentA Requires ConfigComponentA =
-    ask[ConfigComponentA].map(_.name) |@| wiredComponentB.contramap(_.b) |@| wiredEnv.ignoring map SomeA
+    SomeA.wire[ConfigComponentA](ask.map(_.name), wiredComponentB.contramap(_.b), wiredEnv.ignoring).widen
 
   def wiredApplication: Application Requires ConfigApplication =
-    wiredComponentA.contramap((_: ConfigApplication).a) map Application
+    Application.wire[ConfigApplication](wiredComponentA.contramap(_.a), wiredComponentD.contramap(_.nameD))
 
 }
 
 object DefaultModule extends DefaultModule
 
 trait TestModule extends DefaultModule {
-  override val wiredEnv = {
-    val syncExecutor = new Executor { def execute(r: Runnable): Unit = r.run() }
-    ExecutionContext.fromExecutor(syncExecutor).singleton map Env
-  }
+  private val syncExecutor = ExecutionContext.fromExecutor(new Executor { def execute(r: Runnable): Unit = r.run() })
+  override val wiredEnv = Env(syncExecutor).wire.singleton
 }
 
 object TestModule extends TestModule
@@ -89,14 +110,18 @@ object Main {
       override def toString: String = name
     }
     val testModule = new TestModule {
-      override def wiredComponentC = MockC.prototype[ComponentC].ignoring[ConfigComponentC]
+      override def wiredComponentC = MockC.wire[ComponentC].ignoring[ConfigComponentC]
     }
     val application: Application = testModule.wiredApplication(readConfig).value
     println(application.run.value)
   }
 
   private def readConfig: ConfigApplication =
-    ConfigApplication(ConfigComponentA(name = "A", ConfigComponentB(name = "B", ConfigComponentC(name = "C"))))
+    ConfigApplication(
+      a = ConfigComponentA(name = "A",
+        b = ConfigComponentB(name = "B",
+          c = ConfigComponentC(name = "C"))),
+      nameD = "D")
 
 }
 
