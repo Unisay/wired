@@ -54,22 +54,23 @@ case class ConfigComponentB(name: String, c: ConfigComponentC)
 case class ConfigComponentC(name: String)
 case class ConfigApplication(a: ConfigComponentA, nameD: String)
 
+/** Here dependant wirings are provided explicitly */
 trait DefaultModule {
 
   def wiredEnv: Wired[Env] =
     Env(scala.concurrent.ExecutionContext.global).wire.singleton
 
   def wiredComponentD: ComponentD Requires String =
-    SomeD.wire(ask[String]).widen
+    SomeD.wire(ask[String])
 
   def wiredComponentC: ComponentC Requires ConfigComponentC =
-    SomeC.wire[ConfigComponentC](ask.map(_.name), wiredEnv.ignoring).widen
+    SomeC.wire[ConfigComponentC](ask.map(_.name), wiredEnv)
 
   def wiredComponentB: ComponentB Requires ConfigComponentB =
-    SomeB.wire[ConfigComponentB](ask.map(_.name), wiredComponentC.contramap(_.c), wiredEnv.ignoring).widen
+    SomeB.wire[ConfigComponentB](ask.map(_.name), wiredComponentC.contramap(_.c), wiredEnv)
 
   def wiredComponentA: ComponentA Requires ConfigComponentA =
-    SomeA.wire[ConfigComponentA](ask.map(_.name), wiredComponentB.contramap(_.b), wiredEnv.ignoring).widen
+    SomeA.wire[ConfigComponentA](ask.map(_.name), wiredComponentB.contramap(_.b), wiredEnv)
 
   def wiredApplication: Application Requires ConfigApplication =
     Application.wire[ConfigApplication](wiredComponentA.contramap(_.a), wiredComponentD.contramap(_.nameD))
@@ -77,6 +78,35 @@ trait DefaultModule {
 }
 
 object DefaultModule extends DefaultModule
+
+/** Here dependant wirings are provided implicitly */
+trait ImplicitModule {
+
+  type WiredD = ComponentD Requires String
+  type WiredC = ComponentC Requires ConfigComponentC
+  type WiredB = ComponentB Requires ConfigComponentB
+  type WiredA = ComponentA Requires ConfigComponentA
+  type WiredApplication = Application Requires ConfigApplication
+
+  implicit def wiredEnv: Wired[Env] =
+    Env(scala.concurrent.ExecutionContext.global).wire.singleton
+
+  implicit def wiredComponentD: WiredD = SomeD.wire(ask[String])
+
+  implicit def wiredComponentC(implicit env: Wired[Env]): WiredC =
+    SomeC.wire[ConfigComponentC](ask.map(_.name), env)
+
+  implicit def wiredComponentB(implicit c: WiredC, env: Wired[Env]): WiredB =
+    SomeB.wire[ConfigComponentB](ask.map(_.name), c.contramap(_.c), env)
+
+  implicit def wiredComponentA(implicit b: WiredB, env: Wired[Env]): WiredA =
+    SomeA.wire[ConfigComponentA](ask.map(_.name), b.contramap(_.b), env)
+
+  implicit def wiredApplication(implicit a: WiredA, d: WiredD): WiredApplication =
+    Application.wire[ConfigApplication](a.contramap(_.a), d.contramap(_.nameD))
+}
+
+object ImplicitModule extends ImplicitModule
 
 trait TestModule extends DefaultModule {
   private val syncExecutor = ExecutionContext.fromExecutor(new Executor { def execute(r: Runnable): Unit = r.run() })

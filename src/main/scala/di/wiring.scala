@@ -4,6 +4,8 @@ import cats._
 import cats.data.Kleisli
 import cats.implicits._
 
+import scala.language.implicitConversions
+
 object wiring {
 
   type Wiring[I, O] = Kleisli[Eval, I, O]
@@ -25,6 +27,10 @@ object wiring {
   implicit class IgnoringSyntax[O](val wired: Wired[O]) extends AnyVal {
     def ignoring[I]: Wiring[I, O] = wired.local(_ => ())
   }
+
+  implicit def ignoring[A, B](wired: Wired[A]): Wiring[B, A] = wired.ignoring
+
+  implicit def widening[A, B, D >: B](wiring: Wiring[A, B]): Wiring[A, D] = wiring.widen
 
   // Syntactic sugar:
 

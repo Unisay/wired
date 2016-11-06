@@ -70,11 +70,10 @@ val cd: D Requires C = D.wire[C](ca, cb)
 ```
 
 "Constant" wirings that require nothing (technically Unit) 
-could be composed with wirings that require any other type 
-using '.ignoring' syntax:
+could be composed with wirings that require any other type:
 
 ```scala
-val cac: Wiring[C, (A, String)] = ca |@| const.ignoring map (_ -> _)
+val cac: Wiring[C, (A, String)] = ca |@| const map (_ -> _)
 ```
 
 And evaluated:
