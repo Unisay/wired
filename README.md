@@ -57,7 +57,7 @@ val singletonA: Wiring[C, A] = A.wire(ask[C]).singleton
 val const: Wired[String] = "Constant".wire // Wired[String] is equivalent to Wiring[Unit, String]
 ```
 
-Wirings can be composed:
+Wirings that require same type can be composed:
 
 ```scala
 import cats.syntax.cartesian._
@@ -67,6 +67,14 @@ val cab: (A, B) Requires C = ca |@| cb map (_ -> _)
 
 // Compose first and second wirings into product type D using "sweet" syntax
 val cd: D Requires C = D.wire[C](ca, cb) 
+```
+
+"Constant" wirings that require nothing (technically Unit) 
+could be composed with wirings that require any other type 
+using '.ignoring' syntax:
+
+```scala
+val cac: Wiring[C, (A, String)] = ca |@| const.ignoring map (_ -> _)
 ```
 
 And evaluated:
@@ -79,4 +87,5 @@ println(cb.run(c).value) // prints: B(C)
 println(cab(c).value)    // prints: (A(C),B(C))
 println(cd(c).value)     // prints: D(A(C),B(C))
 println(const(()).value) // prints: Constant
+println(cac(c).value)    // prints: (A(C),Constant) 
 ```
