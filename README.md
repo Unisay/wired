@@ -65,7 +65,7 @@ Wirings that require same type can be composed:
 import cats.syntax.cartesian._
 
 // Compose first and second wirings into product
-val abc: (A, B) <<- C = ca |@| cb map (_ -> _)
+val abc: (A, B) <<- C = ca zip cb
 
 // Compose first and second wirings into product type D using "sweet" syntax
 val cd: C ->> D = D.wire[C](ca, cb) 

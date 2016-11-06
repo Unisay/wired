@@ -23,6 +23,7 @@ object wiring {
   }
 
   implicit class WiringSyntax[I, O](val wiring: I->>O) extends AnyVal {
+    def zip[R](right: I->>R): I->>(O,R) = wiring |@| right map (_ -> _)
     def =>>[R](f: O => R) = wiring map f
     def <<=[R](f: R => I) = wiring contramap f
     def singleton: I->>O = wiring.mapF(_.memoize)
