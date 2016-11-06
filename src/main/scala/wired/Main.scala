@@ -60,19 +60,19 @@ trait DefaultModule {
   def wiredEnv: Wired[Env] =
     Env(scala.concurrent.ExecutionContext.global).wire.singleton
 
-  def wiredComponentD: ComponentD Requires String =
+  def wiredComponentD: String ->> ComponentD =
     SomeD.wire(ask[String])
 
-  def wiredComponentC: ComponentC Requires ConfigComponentC =
+  def wiredComponentC: ConfigComponentC ->> ComponentC =
     SomeC.wire[ConfigComponentC](ask.map(_.name), wiredEnv)
 
-  def wiredComponentB: ComponentB Requires ConfigComponentB =
+  def wiredComponentB: ConfigComponentB ->> ComponentB =
     SomeB.wire[ConfigComponentB](ask.map(_.name), wiredComponentC.contramap(_.c), wiredEnv)
 
-  def wiredComponentA: ComponentA Requires ConfigComponentA =
+  def wiredComponentA: ConfigComponentA ->> ComponentA =
     SomeA.wire[ConfigComponentA](ask.map(_.name), wiredComponentB.contramap(_.b), wiredEnv)
 
-  def wiredApplication: Application Requires ConfigApplication =
+  def wiredApplication: ConfigApplication ->> Application =
     Application.wire[ConfigApplication](wiredComponentA.contramap(_.a), wiredComponentD.contramap(_.nameD))
 
 }
@@ -82,11 +82,11 @@ object DefaultModule extends DefaultModule
 /** Here dependant wirings are provided implicitly */
 trait ImplicitModule {
 
-  type WiredD = ComponentD Requires String
-  type WiredC = ComponentC Requires ConfigComponentC
-  type WiredB = ComponentB Requires ConfigComponentB
-  type WiredA = ComponentA Requires ConfigComponentA
-  type WiredApplication = Application Requires ConfigApplication
+  type WiredD = String ->> ComponentD
+  type WiredC = ConfigComponentC ->> ComponentC
+  type WiredB = ConfigComponentB ->> ComponentB
+  type WiredA = ConfigComponentA ->> ComponentA
+  type WiredApplication = ConfigApplication ->> Application
 
   implicit def wiredEnv: Wired[Env] =
     Env(scala.concurrent.ExecutionContext.global).wire.singleton

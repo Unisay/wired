@@ -18,17 +18,16 @@ Functional config/dependency injection tool for Scala
 The central concept is `Wiring`
 
 ```scala
-  type Wiring[I, O] = cats.data.Kleisli[cats.Eval, I, O] 
-  // Wiring[Config, Application]
-  // given a Config it can produce an Application
-  
-  type Wired[O] = Wiring[Unit, O] 
-  // For types that require no configuration, like constants.
-  // example: Wired[ExecutionContext]  
-  
-  type Requires[O, I] = Wiring[I, O] 
-  // For infix notation, like: `Application Requires Config`
-  // given a Config it can produce an Application
+type Wiring[I, O] = cats.data.Kleisli[cats.Eval, I, O] 
+// example: Wiring[Config, Application]
+// Given a Config wiring produces an Application
+
+// Aliases for infix notation
+type ->>[I, O] = Wiring[I, O] // Config ->> Application
+type <<-[O, I] = Wiring[I, O] // Application <<- Config
+
+// Alias for types that require no configuration, like constants:
+type Wired[O] = Unit ->> O // example: Wired[ExecutionContext]  
 ```
 
 Assuming the following setup:
@@ -46,14 +45,14 @@ Wirings are defined like this:
 
 ```scala
 // Define a wiring that given C produces a new instance of type A
-val ca: Wiring[C, A] = ask[C] map A
+val ca: C ->> A = ask[C] map A
 
 // Define wiring using alternative syntax
 // Given C it produces a new instance of type B
-val cb: B Requires C = B.wire(ask[C])
+val cb: C ->> B = B.wire(ask[C])
 
 // Define a singleton wiring that requires C and produces same instance of A each time its evaluated
-val singletonA: Wiring[C, A] = A.wire(ask[C]).singleton
+val singletonA: C ->> A = A.wire(ask[C]).singleton
 
 // Define a constant wiring that requires nothing in order to produce String
 val const: Wired[String] = "Constant".wire // Wired[String] is equivalent to Wiring[Unit, String]
@@ -65,17 +64,17 @@ Wirings that require same type can be composed:
 import cats.syntax.cartesian._
 
 // Compose first and second wirings into product
-val cab: (A, B) Requires C = ca |@| cb map (_ -> _)
+val abc: (A, B) <<- C = ca |@| cb map (_ -> _)
 
 // Compose first and second wirings into product type D using "sweet" syntax
-val cd: D Requires C = D.wire[C](ca, cb) 
+val cd: C ->> D = D.wire[C](ca, cb) 
 ```
 
 "Constant" wirings that require nothing (technically Unit) 
 could be composed with wirings that require any other type:
 
 ```scala
-val cac: Wiring[C, (A, String)] = ca |@| const map (_ -> _)
+val cac: C ->> (A, String) = ca |@| const map (_ -> _)
 ```
 
 And evaluated:
@@ -88,7 +87,7 @@ println(ca(c).value)     // prints: A(C), shorter syntax
 println(ca.get(c))       // prints: A(C), alternative syntax
 
 println(cb.get(c))      // prints: B(C)
-println(cab.get(c))     // prints: (A(C),B(C))
+println(abc.get(c))     // prints: (A(C),B(C))
 println(cd.get(c))      // prints: D(A(C),B(C))
 println(const.get(()))  // prints: Constant 
 println(cac.get(c))     // prints: (A(C),Constant) 
