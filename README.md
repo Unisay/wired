@@ -1,15 +1,17 @@
-# Example of a dependency injection approach in scala
+# Wired
 
-## Glossary:
-- `Component` is some type that can be instantiated (initialized) with configuration values as its state passed via constructor. Might be represented by trait with implementing class or just by a [case] class. 
-- `Wiring[A]` is a data type capable of instantiating the component of type `A` recursively wiring its dependencies.
-- `Module` is a group of `Wiring`s.
+Functional config/dependency injection tool for Scala
 
 ## Features:
 - [x] Functional: composable, immutable and lazy.
 - [x] Type-safe: compile-type verification with readable error messages.
 - [x] Configurable: supports multiple `Module`s with possibility to override specific `Wiring`s (useful for testing)
 - [x] Non-intrusive: components don't know how exactly they are wired together.
+
+## Glossary:
+- `Component` is some type that can be instantiated (initialized) with configuration values as its state passed via constructor. Might be represented by trait with implementing class or just by a [case] class. 
+- `Wiring[A]` is a data type capable of instantiating the component of type `A` recursively wiring its dependencies.
+- `Module` is a group of `Wiring`s.
 
 ## Implementation:
 
