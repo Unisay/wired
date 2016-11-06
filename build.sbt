@@ -1,4 +1,4 @@
-name := "di-exp"
+name := "wired"
 
 version := "1.0"
 

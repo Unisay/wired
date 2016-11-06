@@ -1,4 +1,4 @@
-package di
+package wired
 
 import cats._
 import cats.data.Kleisli

@@ -1,10 +1,10 @@
-package di
+package wired
 
 import java.util.concurrent.Executor
 
 import cats.Eval
 import cats.implicits._
-import di.wiring._
+import wired.wiring._
 
 import scala.concurrent.ExecutionContext
 
