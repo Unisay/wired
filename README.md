@@ -46,6 +46,7 @@ Wirings are defined like this:
 ```scala
 // Define a wiring that given C produces a new instance of type A
 val ca: C ->> A = ask[C] map A
+val ca: C ->> A = ask[C] ==> A // ==> is an alias for map
 
 // Define wiring using alternative syntax
 // Given C it produces a new instance of type B
@@ -86,9 +87,11 @@ println(ca.run(c).value) // prints: A(C)
 println(ca(c).value)     // prints: A(C), shorter syntax
 println(ca.get(c))       // prints: A(C), alternative syntax
 
-println(cb.get(c))      // prints: B(C)
-println(abc.get(c))     // prints: (A(C),B(C))
-println(cd.get(c))      // prints: D(A(C),B(C))
-println(const.get(()))  // prints: Constant 
-println(cac.get(c))     // prints: (A(C),Constant) 
+println(cb.get(c))       // prints: B(C)
+println(abc.get(c))      // prints: (A(C),B(C))
+println(cd.get(c))       // prints: D(A(C),B(C))
+println(const.get(()))   // prints: Constant 
+println(cac.get(c))      // prints: (A(C),Constant) 
 ```
+
+For an extended usage example see [Main.scala](https://github.com/Unisay/wired/blob/master/src/main/scala/wired/Main.scala)
