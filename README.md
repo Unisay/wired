@@ -62,8 +62,6 @@ val const: Wired[String] = "Constant".wire // Wired[String] is equivalent to Wir
 Wirings that require same type can be composed:
 
 ```scala
-import cats.syntax.cartesian._
-
 // Compose first and second wirings into product
 val abc: (A, B) <<- C = ca zip cb
 
