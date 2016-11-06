@@ -12,7 +12,7 @@ object wiring {
 
   def ask[I]: Wiring[I, I] = Kleisli.ask[Eval, I]
 
-  def wire[I, O](value: O): Wired[O] = Kleisli.lift[Eval, Unit, O](Eval.now(value))
+  def wire[I, O](value: O): Wired[O] = Kleisli.lift(Eval.now(value))
 
   implicit class WireSyntax[O](val value: O) extends AnyVal {
     def wire[OO >: O]: Wired[OO] = wiring.wire(value)
