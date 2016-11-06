@@ -20,8 +20,9 @@ object wiring {
     def wire[OO >: O]: Wired[OO] = wiring.wire(value)
   }
 
-  implicit class SingletonSyntax[I, O](val wiring: Wiring[I, O]) extends AnyVal {
+  implicit class WiringSyntax[I, O](val wiring: Wiring[I, O]) extends AnyVal {
     def singleton: Wiring[I, O] = wiring.mapF(_.memoize)
+    def get(i: I): O = wiring.run(i).value
   }
 
   implicit class IgnoringSyntax[O](val wired: Wired[O]) extends AnyVal {

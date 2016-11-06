@@ -81,10 +81,13 @@ And evaluated:
 ```scala
 val c = new C { override def toString = "C" }
 
-println(ca(c).value)     // prints: A(C)
-println(cb.run(c).value) // prints: B(C)
-println(cab(c).value)    // prints: (A(C),B(C))
-println(cd(c).value)     // prints: D(A(C),B(C))
-println(const(()).value) // prints: Constant
-println(cac(c).value)    // prints: (A(C),Constant) 
+println(ca.run(c).value) // prints: A(C)
+println(ca(c).value)     // prints: A(C), shorter syntax
+println(ca.get(c))       // prints: A(C), alternative syntax
+
+println(cb.get(c))      // prints: B(C)
+println(cab.get(c))     // prints: (A(C),B(C))
+println(cd.get(c))      // prints: D(A(C),B(C))
+println(const.get(()))  // prints: Constant 
+println(cac.get(c))     // prints: (A(C),Constant) 
 ```

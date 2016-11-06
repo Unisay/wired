@@ -130,7 +130,7 @@ object Main {
   def testUsesTestModule(): Unit = {
     import TestModule._
 
-    val application: Application = wiredApplication(readConfig).value
+    val application: Application = wiredApplication.get(readConfig)
     println(application.run.value)
   }
 
@@ -142,7 +142,7 @@ object Main {
     val testModule = new TestModule {
       override def wiredComponentC = MockC.wire[ComponentC].ignoring[ConfigComponentC]
     }
-    val application: Application = testModule.wiredApplication(readConfig).value
+    val application: Application = testModule.wiredApplication.get(readConfig)
     println(application.run.value)
   }
 
