@@ -34,7 +34,7 @@ The central concept is `Wiring`
 Assuming the following setup:
 
 ```scala
-import di.wiring._
+import wired.wiring._
 
 trait C
 case class A(c: C)
