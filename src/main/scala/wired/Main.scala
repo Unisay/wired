@@ -60,20 +60,19 @@ trait DefaultModule {
   def wiredEnv: Wired[Env] =
     Env(scala.concurrent.ExecutionContext.global).wire.singleton
 
-  def wiredComponentD: String ->> ComponentD =
-    SomeD.wire(ask[String])
+  def wiredComponentD: String ->> ComponentD = ask[String] =>> SomeD
 
   def wiredComponentC: ConfigComponentC ->> ComponentC =
-    SomeC.wire[ConfigComponentC](ask.map(_.name), wiredEnv)
+    SomeC.wire[ConfigComponentC](ask =>> (_.name), wiredEnv)
 
   def wiredComponentB: ConfigComponentB ->> ComponentB =
-    SomeB.wire[ConfigComponentB](ask.map(_.name), wiredComponentC.contramap(_.c), wiredEnv)
+    SomeB.wire[ConfigComponentB](ask =>> (_.name), wiredComponentC <<= (_.c), wiredEnv)
 
   def wiredComponentA: ConfigComponentA ->> ComponentA =
-    SomeA.wire[ConfigComponentA](ask.map(_.name), wiredComponentB.contramap(_.b), wiredEnv)
+    SomeA.wire[ConfigComponentA](ask =>> (_.name), wiredComponentB <<= (_.b), wiredEnv)
 
   def wiredApplication: ConfigApplication ->> Application =
-    Application.wire[ConfigApplication](wiredComponentA.contramap(_.a), wiredComponentD.contramap(_.nameD))
+    Application.wire[ConfigApplication](wiredComponentA <<= (_.a), wiredComponentD <<= (_.nameD))
 
 }
 

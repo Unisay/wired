@@ -19,9 +19,12 @@ object wiring {
 
   implicit class WireSyntax[O](val value: O) extends AnyVal {
     def wire[OO >: O]: Wired[OO] = wiring.wire(value)
+    def ->>[OO >: O]: Wired[OO] = wire
   }
 
   implicit class WiringSyntax[I, O](val wiring: I->>O) extends AnyVal {
+    def =>>[R](f: O => R) = wiring map f
+    def <<=[R](f: R => I) = wiring contramap f
     def singleton: I->>O = wiring.mapF(_.memoize)
     def get(i: I): O = wiring.run(i).value
   }
