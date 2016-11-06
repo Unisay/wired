@@ -63,7 +63,7 @@ Wirings that require same type can be composed:
 
 ```scala
 // Compose first and second wirings into product
-val abc: (A, B) <<- C = ca zip cb
+val abc: C ->> (A, B) = ca zip cb
 
 // Compose first and second wirings into product type D using "sweet" syntax
 val cd: C ->> D = D.wire[C](ca, cb) 
@@ -73,7 +73,7 @@ val cd: C ->> D = D.wire[C](ca, cb)
 could be composed with wirings that require any other type:
 
 ```scala
-val cac: C ->> (A, String) = ca |@| const map (_ -> _)
+val cac: C ->> (A, String) = ca zip const
 ```
 
 And evaluated:
