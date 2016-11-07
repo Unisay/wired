@@ -19,13 +19,12 @@ object wiring {
 
   implicit class WireSyntax[O](val value: O) extends AnyVal {
     def wire[OO >: O]: Wired[OO] = wiring.wire(value)
-    def ->>[OO >: O]: Wired[OO] = wire
   }
 
   implicit class WiringSyntax[I, O](val wiring: I->>O) extends AnyVal {
     def zip[R](right: I->>R): I->>(O,R) = wiring |@| right map (_ -> _)
-    def =>>[R](f: O => R) = wiring map f
-    def <<=[R](f: R => I) = wiring contramap f
+    def =>>[R](f: O => R): I->>R = wiring map f
+    def <<=[R](f: R => I): R->>O = wiring contramap f
     def singleton: I->>O = wiring.mapF(_.memoize)
     def get(i: I): O = wiring.run(i).value
   }
@@ -33,6 +32,10 @@ object wiring {
   implicit class IgnoringSyntax[O](val wired: Wired[O]) extends AnyVal {
     def ignoring[I]: I->>O = wired.local(_ => ())
   }
+
+  def wired0[T](implicit w: Wired[T]): Wired[T] = w
+
+  def wired[I, O](implicit w: I->>O): I->>O = w
 
   implicit def ignoring[A, B](wired: Wired[A]): B->>A = wired.ignoring
 

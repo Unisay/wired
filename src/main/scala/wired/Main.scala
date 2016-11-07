@@ -81,28 +81,25 @@ object DefaultModule extends DefaultModule
 /** Here dependant wirings are provided implicitly */
 trait ImplicitModule {
 
-  type WiredD = String ->> ComponentD
-  type WiredC = ConfigComponentC ->> ComponentC
-  type WiredB = ConfigComponentB ->> ComponentB
-  type WiredA = ConfigComponentA ->> ComponentA
-  type WiredApplication = ConfigApplication ->> Application
-
   implicit def wiredEnv: Wired[Env] =
     Env(scala.concurrent.ExecutionContext.global).wire.singleton
 
-  implicit def wiredComponentD: WiredD = SomeD.wire(ask[String])
+  implicit def wiredComponentD: String ->> ComponentD = SomeD.wire(ask[String])
 
-  implicit def wiredComponentC(implicit env: Wired[Env]): WiredC =
-    SomeC.wire[ConfigComponentC](ask.map(_.name), env)
+  implicit def wiredComponentC: ConfigComponentC ->> ComponentC =
+    SomeC.wire[ConfigComponentC](ask =>> (_.name), wired0[Env])
 
-  implicit def wiredComponentB(implicit c: WiredC, env: Wired[Env]): WiredB =
-    SomeB.wire[ConfigComponentB](ask.map(_.name), c.contramap(_.c), env)
+  implicit def wiredComponentB(implicit c: ConfigComponentC ->> ComponentC): ConfigComponentB ->> ComponentB =
+    SomeB.wire[ConfigComponentB](ask =>> (_.name), c <<= (_.c), wired0[Env])
 
-  implicit def wiredComponentA(implicit b: WiredB, env: Wired[Env]): WiredA =
-    SomeA.wire[ConfigComponentA](ask.map(_.name), b.contramap(_.b), env)
+  implicit def wiredComponentA: ConfigComponentA ->> ComponentA =
+    SomeA.wire[ConfigComponentA](ask =>> (_.name), wired[ConfigComponentB, ComponentB] <<= (_.b), wired0[Env])
 
-  implicit def wiredApplication(implicit a: WiredA, d: WiredD): WiredApplication =
-    Application.wire[ConfigApplication](a.contramap(_.a), d.contramap(_.nameD))
+  implicit def wiredApplication: ConfigApplication ->> Application =
+    Application.wire(
+      wired[ConfigComponentA, ComponentA] <<= (_.a),
+      wired[String, ComponentD] <<= (_.nameD)
+    )
 }
 
 object ImplicitModule extends ImplicitModule
