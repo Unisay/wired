@@ -6,6 +6,8 @@ scalaVersion := "2.11.8"
 
 libraryDependencies += "org.typelevel" %% "cats" % "0.8.0"
 
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
+
 scalacOptions ++= Seq(
   "-unchecked",
   "-feature",
