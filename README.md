@@ -33,7 +33,7 @@ type Wired[O] = Unit ->> O // example: Wired[ExecutionContext]
 Assuming the following setup:
 
 ```scala
-import wired.wiring._
+import com.github.unisay.wired.all._
 
 trait C
 case class A(c: C)
@@ -92,4 +92,4 @@ println(const.get(()))   // prints: Constant
 println(cac.get(c))      // prints: (A(C),Constant) 
 ```
 
-For an extended usage example see [Main.scala](https://github.com/Unisay/wired/blob/master/src/main/scala/wired/Main.scala)
+For an extended usage example see [Example.scala](https://github.com/Unisay/wired/blob/master/src/test/scala/com/github/unisay/wired/Example.scala)

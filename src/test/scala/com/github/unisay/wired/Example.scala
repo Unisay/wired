@@ -1,9 +1,9 @@
-package wired
+package com.github.unisay.wired
 
 import java.util.concurrent.Executor
 
 import cats.Eval
-import wired.wiring._
+import com.github.unisay.wired.all._
 
 import scala.concurrent.ExecutionContext
 
@@ -110,7 +110,7 @@ trait TestModule extends DefaultModule {
 
 object TestModule extends TestModule
 
-object Main {
+object Example {
 
   def main(args: Array[String]): Unit = {
     import DefaultModule._
