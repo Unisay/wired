@@ -15,7 +15,7 @@ Functional config/dependency injection tool for Scala
 
 ## Implementation:
 
-The central concept is `Wiring`
+The central concept is `Wiring`. `Wiring[A, B]` is a recipe how to build B given its dependency A.
 
 ```scala
 type Wiring[I, O] = cats.data.Kleisli[cats.Eval, I, O] 
