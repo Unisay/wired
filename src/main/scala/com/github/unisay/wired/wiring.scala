@@ -88,6 +88,16 @@ trait Wirings {
       w1 |@| w2 |@| w3 |@| w4 |@| w5 |@| w6 |@| w7 |@| w8 |@| w9 |@| w10 map f
   }
 
+  implicit class WireSyntaxF11[I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, O](val f: (I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11) => O) {
+    def wire[I](w1: I->>I1, w2: I->>I2, w3: I->>I3, w4: I->>I4, w5: I->>I5, w6: I->>I6, w7: I->>I7, w8: I->>I8, w9: I->>I9, w10: I->>I10, w11: I->>I11) =
+      w1 |@| w2 |@| w3 |@| w4 |@| w5 |@| w6 |@| w7 |@| w8 |@| w9 |@| w10 |@| w11 map f
+  }
+
+  implicit class WireSyntaxF12[I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I12, O](val f: (I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I12) => O) {
+    def wire[I](w1: I->>I1, w2: I->>I2, w3: I->>I3, w4: I->>I4, w5: I->>I5, w6: I->>I6, w7: I->>I7, w8: I->>I8, w9: I->>I9, w10: I->>I10, w11: I->>I11, w12: I->>I12) =
+      w1 |@| w2 |@| w3 |@| w4 |@| w5 |@| w6 |@| w7 |@| w8 |@| w9 |@| w10 |@| w11 |@| w12 map f
+  }
+
 }
 
 object all extends Wirings
